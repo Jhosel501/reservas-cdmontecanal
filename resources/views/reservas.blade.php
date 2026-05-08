@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-// CSRF token para peticiones AJAX
+<!--CSRF token para peticiones AJAX en Laravel-->
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Zona Barbacoas — Club Deportivo Montecanal</title>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">

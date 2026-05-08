@@ -4,6 +4,13 @@ let selPkg = null;
 let extras = {};
 let qtys = { barril:1, vasos:1, hielo:1, carbon:1, refrescos:1, servilletas:1, platos:1, agua:1 };
 
+/**
+ * Selecciona un paquete de barbacoa, actualiza la interfaz de usuario y refresca el resumen.
+ * @param {HTMLElement} el - El elemento del paquete seleccionado.
+ * @param {number} id - ID del paquete.
+ * @param {string} name - Nombre del paquete.
+ * @param {number} price - Precio del paquete.
+ */
 function selectPkg(el, id, name, price) {
   document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
@@ -11,6 +18,14 @@ function selectPkg(el, id, name, price) {
   updateSummary();
 }
 
+/**
+ * Alterna la selección de un extra, actualiza la interfaz y el resumen.
+ * @param {HTMLElement} el - El elemento del extra.
+ * @param {string} key - Clave del extra.
+ * @param {string} name - Nombre del extra.
+ * @param {number} price - Precio del extra.
+ * @param {boolean} hasQty - Si el extra tiene cantidad.
+ */
 function toggleExtra(el, key, name, price, hasQty) {
   if (extras[key]) {
     delete extras[key];
@@ -24,6 +39,12 @@ function toggleExtra(el, key, name, price, hasQty) {
   updateSummary();
 }
 
+/**
+ * Cambia la cantidad de un extra.
+ * @param {Event} e - El evento del clic.
+ * @param {string} key - Clave del extra.
+ * @param {number} d - Cambio en la cantidad (positivo o negativo).
+ */
 function chQty(e, key, d) {
   e.stopPropagation();
   qtys[key] = Math.max(1, (qtys[key] || 1) + d);
@@ -31,6 +52,10 @@ function chQty(e, key, d) {
   updateSummary();
 }
 
+/**
+ * Calcula el total del precio incluyendo paquete y extras.
+ * @returns {number} El total calculado.
+ */
 function calcTotal() {
   if (!selPkg) return 0;
   let t = selPkg.price;
@@ -38,6 +63,9 @@ function calcTotal() {
   return t;
 }
 
+/**
+ * Actualiza la visualización del resumen de la reserva.
+ */
 function updateSummary() {
   const linesEl = document.getElementById('summaryLines');
   const totalBlock = document.getElementById('summaryTotalBlock');
@@ -62,6 +90,9 @@ function updateSummary() {
   btn.disabled = false;
 }
 
+/**
+ * Abre el modal de confirmación con el resumen de la reserva.
+ */
 function openModal() {
   let html = '';
   if (selPkg) html += `<strong>${selPkg.name}</strong> — ${selPkg.price}€<br>`;
@@ -74,6 +105,10 @@ function openModal() {
   document.getElementById('modalForm').classList.add('active');
 }
 
+/**
+ * Cierra el modal del formulario, opcionalmente resetea todo.
+ * @param {boolean} clear - Si se debe resetear todo.
+ */
 function closeModalForm(clear) {
   document.getElementById('modalForm').classList.remove('active');
   document.getElementById('formError').style.display = 'none';
@@ -82,11 +117,17 @@ function closeModalForm(clear) {
   if (clear) resetAll();
 }
 
+/**
+ * Cierra el modal de éxito y resetea todo.
+ */
 function closeModalOk() {
   document.getElementById('modalOk').classList.remove('active');
   resetAll();
 }
 
+/**
+ * Resetea todas las selecciones, extras y campos del formulario.
+ */
 function resetAll() {
   document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('.extra-item').forEach(c => c.classList.remove('selected'));
@@ -128,7 +169,7 @@ async function submitReserva() {
 
   // 3. Preparamos el "paquete" de datos estructurado para Laravel
   const datosReserva = {
-    paquete_id: selPkg.id, // Tu función selectPkg ya guardaba el ID correcto (1, 2 o 3)
+    paquete_id: selPkg.id, // función selectPkg ya guardaba el ID correcto (1, 2 o 3)
     nombre: n,
     apellido: a,
     email: e,
