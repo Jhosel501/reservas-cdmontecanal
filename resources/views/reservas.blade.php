@@ -312,7 +312,11 @@
       </div>
     </div>
 
-    <div class="form-error" id="formError"></div>
+    <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+        <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
+    </div>
+
+    <div class="form-error" id="formError" style="color: red; display: none; margin-bottom: 15px; text-align: center;"></div>
 
     <div class="modal-actions">
       <button class="btn-cancel btn-cerrar-modal">Cancelar</button>
@@ -367,5 +371,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="{{ asset('js/main.js') }}"></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 </html>

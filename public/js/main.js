@@ -147,44 +147,52 @@ async function submitReserva() {
   const f = document.getElementById('fFecha').value;
   const errEl = document.getElementById('formError');
 
-  // 1. Validaciones del lado del cliente
+  // 1. Validaciones básicas del lado del cliente
   if (!n||!a||!e||!t||!f) { errEl.textContent='Por favor, rellena todos los campos.'; errEl.style.display='block'; return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { errEl.textContent='El email no tiene un formato válido.'; errEl.style.display='block'; return; }
+  
+  const fechaSeleccionada = new Date(f);
+  const fechaHoy = new Date();
+  fechaHoy.setHours(0,0,0,0);
+  if (fechaSeleccionada <= fechaHoy) { errEl.textContent = 'La fecha del evento debe ser a partir de mañana.'; errEl.style.display = 'block'; return; }
+
+  // 2. Validación de reCAPTCHA (¡ANTES de bloquear el botón!)
+  const recaptchaResponse = grecaptcha.getResponse();
+  if (recaptchaResponse.length === 0) {
+    errEl.textContent = 'Por favor, verifica que no eres un robot marcando la casilla.'; 
+    errEl.style.display = 'block'; 
+    return; 
+  }
+
+  // Si pasamos todas las validaciones, ocultamos errores y bloqueamos el botón
   errEl.style.display='none';
-
   const btn = document.getElementById('btnConfirm');
-  btn.textContent = 'Enviando...'; btn.disabled = true;
+  btn.textContent = 'Enviando...'; 
+  btn.disabled = true;
 
-  // 2. Diccionario traductor: Convierte tus claves del frontend a los IDs de la base de datos
+  // 3. Diccionario traductor para la Base de Datos
   const mapaExtras = {
-    'barril': 1,
-    'vasos': 2,
-    'hielo': 3,
-    'carbon': 4,
-    'refrescos': 5,
-    'servilletas': 6,
-    'platos': 7,
-    'agua': 8
+    'barril': 1, 'vasos': 2, 'hielo': 3, 'carbon': 4,
+    'refrescos': 5, 'servilletas': 6, 'platos': 7, 'agua': 8
   };
 
-  // 3. Preparamos el "paquete" de datos estructurado para Laravel
+  // 4. Preparamos el paquete de datos estructurado para Laravel
   const datosReserva = {
-    paquete_id: selPkg.id, // función selectPkg ya guardaba el ID correcto (1, 2 o 3)
+    paquete_id: selPkg.id,
     nombre: n,
     apellido: a,
     email: e,
     telefono: t,
     fecha_evento: f,
-    // Convertimos la lista de extras seleccionados a un formato de array de objetos con ID y cantidad
     extras: Object.entries(extras).map(([key, ex]) => ({
       id: mapaExtras[key],
       cantidad: ex.hasQty ? qtys[key] || 1 : 1
-    }))
+    })),
+    recaptcha_token: recaptchaResponse // <-- Ahora el token se inyecta correctamente
   };
 
-  // 4. Conexión segura con el Backend
+  // 5. Conexión segura con el Backend
   try {
-    // Capturamos el token CSRF para demostrarle a Laravel que somos una petición legítima
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     const response = await fetch('/api/reservar', {
@@ -198,21 +206,25 @@ async function submitReserva() {
 
     const result = await response.json();
 
-    // Si el controlador de Laravel nos dice que todo ha ido bien (success: true)
     if (result.success) {
       closeModalForm(false);
       document.getElementById('modalOk').classList.add('active');
     } else {
-      // Si la validación del backend falla o hay algún error
+      // Si Laravel o Google rechazan la validación en el servidor
       throw new Error(result.message || 'Error desconocido en el servidor');
     }
     
   } catch(err) {
-    errEl.textContent = '⚠️ Error en la conexión con el servidor. Revisa la consola.';
+    errEl.textContent = err.message || '⚠️ Error en la conexión con el servidor. Revisa la consola.';
     errEl.style.display = 'block';
     console.error("Detalles del error:", err);
+    
+    // Devolvemos el botón a su estado normal para que puedan reintentar
     btn.textContent = 'Confirmar reserva'; 
     btn.disabled = false;
+    
+    // Reseteamos la casilla de Google para que puedan volver a verificarla
+    grecaptcha.reset(); 
   }
 }
 
@@ -285,3 +297,7 @@ if (botonReserva) {
   // Cuando hagan clic, ejecutamos la función que prepara los datos y abre el modal
   botonReserva.addEventListener('click', openModal);
 }
+// Establece el día de mañana como fecha mínima en el calendario HTML
+const mañana = new Date();
+mañana.setDate(mañana.getDate() + 1);
+document.getElementById('fFecha').min = mañana.toISOString().split("T")[0];
